@@ -4,6 +4,7 @@ var chalk = require("chalk");
 var GoogleSpreadsheet = require("google-spreadsheet");
 var githubRequest = require("./github-request");
 var githubTicketParser = require("./github-ticket-parser");
+var exportAsJsonFile = require("./export-as-json-file");
 
 var Habitat = require("habitat");
 Habitat.load(".env");
@@ -20,6 +21,7 @@ var GITHUB_API_ISSUES_ENDPOINT = "https://api.github.com/repos/" + env.get("GITH
 
 var currentPageNum = 1;
 var morePagesAhead = true;
+var allParsedSessions = [];
 
 function traverseWithPagination(pageNum,cb) {
   githubRequest(
@@ -38,7 +40,11 @@ function traverseWithPagination(pageNum,cb) {
       } else {
         console.log("\n\n Success \n\n");
         console.log("///// number of issues found: ", body.length, "\n\n\n");
-        body.forEach(githubTicketParser);
+        body.forEach(function(ticket) {
+          githubTicketParser(ticket, function(parsedSession) {
+            allParsedSessions.push(parsedSession);
+          })
+        });
         if ( response.headers.link.indexOf('rel="last"') === -1 ) {
           morePagesAhead = false;
         }
@@ -52,6 +58,11 @@ function go() {
     console.log("\n\n\n currentPageNum = ", currentPageNum ,"\n\n\n");
     traverseWithPagination(currentPageNum, function() { 
       go();
+    });
+  } else {
+    console.log(allParsedSessions);
+    exportAsJsonFile(JSON.stringify(allParsedSessions),function() {
+      console.log(chalk.red("\n\n Done saving file." ));
     });
   }
 }
