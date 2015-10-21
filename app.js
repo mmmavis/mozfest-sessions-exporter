@@ -61,8 +61,10 @@ function go() {
     });
   } else {
     console.log(allParsedSessions);
-    exportAsJsonFile(JSON.stringify(allParsedSessions),function() {
-      console.log(chalk.red("\n\n Done saving file." ));
+    exportAsJsonFile(allParsedSessions,function(err) {
+      if (err) {
+        console.log("Error exporting json file: ", err);
+      }
     });
   }
 }
