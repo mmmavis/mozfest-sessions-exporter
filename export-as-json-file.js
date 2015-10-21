@@ -10,7 +10,7 @@ module.exports = function(fileContent, cb) {
     if (err) {
       cb(err);
     }
-    console.log(chalk.blue("\n\n Done saving file. " + filePath + " was saved!" ));
+    console.log(chalk.blue("\n\n [JSON] Done saving file. " + filePath + " was saved!" ));
     cb();
   });
 };

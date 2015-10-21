@@ -5,6 +5,7 @@ var GoogleSpreadsheet = require("google-spreadsheet");
 var githubRequest = require("./github-request");
 var githubTicketParser = require("./github-ticket-parser");
 var exportAsJsonFile = require("./export-as-json-file");
+var exportAsCsvFile = require("./export-as-csv-file");
 
 var Habitat = require("habitat");
 Habitat.load(".env");
@@ -66,6 +67,11 @@ function go() {
         console.log("Error exporting json file: ", err);
       }
     });
+    exportAsCsvFile(allParsedSessions, function(err) {
+      if (err) {
+        console.log("Error exporting csv file: ", err);
+      }
+    })
   }
 }
 
