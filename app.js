@@ -3,6 +3,7 @@ var app = express();
 var chalk = require("chalk");
 var GoogleSpreadsheet = require("google-spreadsheet");
 var githubRequest = require("./github-request");
+var githubTicketParser = require("./github-ticket-parser");
 
 var Habitat = require("habitat");
 Habitat.load(".env");
@@ -15,59 +16,47 @@ var GITHUB_USER_CRED = {
   username: env.get("GITHUB_USERNAME"),
   password: env.get("GITHUB_PASSWORD")
 };
-var GITHUB_API_ISSUES_ENDPOINT = "https://api.github.com/repos/" + env.get("GITHUB_REPO") + "/issues";
+var GITHUB_API_ISSUES_ENDPOINT = "https://api.github.com/repos/" + env.get("GITHUB_REPO") + "/issues" + "?per_page=100";
 
-console.log(GITHUB_API_ISSUES_ENDPOINT);
+var currentPageNum = 1;
+var morePagesAhead = true;
 
-var options = {
-    method: "GET",
-    url: GITHUB_API_ISSUES_ENDPOINT
-  };
+function traverseWithPagination(pageNum,cb) {
+  githubRequest(
+    {
+      method: "GET",
+      url: GITHUB_API_ISSUES_ENDPOINT + "&page=" + pageNum
+    }, 
+    GITHUB_USER_CRED,
+    function(error, response, body) {
+      currentPageNum++;
+      if (error) {
+        console.log("\nErrorrrrr", error, "\n");
+      } 
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        console.log("Response status HTTP " + response.statusCode + ", Github error message: " + response.body.message);
+      } else {
+        console.log("\n\n Success \n\n");
+        console.log("///// number of issues found: ", body.length, "\n\n\n");
+        body.forEach(githubTicketParser);
+        if ( response.headers.link.indexOf('rel="last"') === -1 ) {
+          morePagesAhead = false;
+        }
+      }
+      cb();
+  });
+}
 
-githubRequest(options, GITHUB_USER_CRED, function(error, response, body) {
-  if (error) {
-    console.log("\nErrorrrrr", error, "\n");
-  } 
-  if (response.statusCode != 200 && response.statusCode != 201) {
-    console.log("Response status HTTP " + response.statusCode + ", Github error message: " + response.body.message);
-  } else {
-    console.log("\n\n Success \n\n");
-    console.log("///// number of issues found: ", body.length, "\n\n\n");
-    body.forEach(parseGithubForSpreadsheet);
+function go() {
+  if (morePagesAhead) {
+    console.log("\n\n\n currentPageNum = ", currentPageNum ,"\n\n\n");
+    traverseWithPagination(currentPageNum, function() { 
+      go();
+    });
   }
-});
-
-var parseGithubForSpreadsheet = function (githubTicket) {
-  // console.log(githubTicket);
-  var ticketBody = githubTicket.body;
-  var headerText = {
-    description: "\r\n\r\n### Description\r\n",
-    agenda: "### Agenda\r\n",
-    facilitator: "\r\n**[ Facilitator ]** "
-  };
-  var parsedRowData = {
-    githubIssueNumber: githubTicket.number,
-    name: githubTicket.title,
-    space: githubTicket.milestone ? githubTicket.milestone.title : null,
-    pathways: githubTicket.labels.map(function(label) {
-      return label.name
-    }),
-    description: parseGithubMeta( ticketBody,
-                                  ticketBody.indexOf(headerText.description) + headerText.description.length,
-                                  ticketBody.indexOf(headerText.agenda)
-    ),
-    facilitator: parseGithubMeta( ticketBody,
-                                  ticketBody.indexOf(headerText.facilitator) + headerText.facilitator.length,
-                                  ticketBody.indexOf(headerText.description)
-    )
-  };
-  console.log(parsedRowData);
 }
 
-function parseGithubMeta(ticketBody, indexStart, indexEnd) {
-  return ticketBody.substring(indexStart, indexEnd);
-}
-
+go();
 
 app.get("/", function(req, res) {
   res.send("Hello World :D <br/><br/> You have reached the 'MozFest Sessions Exporter'");
