@@ -30,11 +30,7 @@ function parse(lines, result) {
 
 function oldSpreasheetRowNumber(line, lines, result) {
   if (line.indexOf("**[ Google Spreadsheet Row Number ]**") !== -1) {
-    try {
-      result.oldSpreasheetRowNumber = parseInt(line.match(/\*\* (\d+)/)[1]);
-    } catch (error) {
-      return false;
-    }
+    result.oldSpreasheetRowNumber = parseInt(line.match(/\*\* (.+)$/)[1]);
     return true;
   }
   return false;
