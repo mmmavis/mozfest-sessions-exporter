@@ -54,24 +54,32 @@ function traverseWithPagination(pageNum,cb) {
   });
 }
 
+function sortSession(a, b) {
+  if (a.space < b.space)
+    return -1;
+  if (a.space > b.space)
+    return 1;
+  return 0;
+}
+
 function go() {
   if (morePagesAhead) {
-    console.log("\n\n\n currentPageNum = ", currentPageNum ,"\n\n\n");
+    console.log(chalk.green("\n\n\n currentPageNum = ", currentPageNum ,"\n"));
     traverseWithPagination(currentPageNum, function() { 
       go();
     });
   } else {
-    console.log(allParsedSessions);
-    exportAsJsonFile(allParsedSessions,function(err) {
+    var sortedSessions = allParsedSessions.sort(sortSession);
+    exportAsJsonFile(sortedSessions,function(err) {
       if (err) {
         console.log("Error exporting json file: ", err);
       }
     });
-    exportAsCsvFile(allParsedSessions, function(err) {
+    exportAsCsvFile(sortedSessions, function(err) {
       if (err) {
         console.log("Error exporting csv file: ", err);
       }
-    })
+    });
   }
 }
 

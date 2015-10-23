@@ -8,13 +8,13 @@ module.exports = function (githubTicket, cb) {
   var parsedRowData = {
     githubIssueNumber: githubTicket.number,
     name: githubTicket.title,
-    space: githubTicket.milestone ? githubTicket.milestone.title : null,
+    space: githubTicket.milestone ? githubTicket.milestone.title : "",
     pathways: githubTicket.labels.map(function(label) {
       return label.name
-    }),
-    description: tokenizedMeta.Description,
+    }).join(", "),
+    description: tokenizedMeta.Description ? tokenizedMeta.Description.filter(function(v) { return !!v; }).join("\n") : "",
     facilitator: tokenizedMeta.facilitator,
-    oldSpreasheetRowNumber: tokenizedMeta.oldSpreasheetRowNumber
+    proposalSpreadsheetRowNumber: tokenizedMeta.oldSpreadsheetRowNumber
   };
   // console.log(parsedRowData);
   // console.log("\n\n");

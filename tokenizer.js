@@ -2,7 +2,15 @@
  * Formatting:
  *
  *   "**[ Google Spreadsheet Row Number ]**" + inline number
+ *      Or "### Google Spreadsheet Row Number" + text until next ### or EOF
  *   "**[ Facilitator ]**" + inline text
+ *      Or "### Facilitator"
+ *          "name:" facilitator #1's name
+ *          "twitter:" @twitter_handle
+ *          "organization:" organization name
+ *          "name:" facilitator #2's name
+ *          "twitter:" @twitter_handle
+ *          "organization:" organization name
  *   "### Description" + text until next ### or EOF
  *   "### Agenda" + text until next ### or EOF
  *   "### Participants"  + text until next ### or EOF
@@ -21,16 +29,16 @@ var tokenize = function(text) {
 
 function parse(lines, result) {
   var line = lines.splice(0,1)[0];
-  oldSpreasheetRowNumber(line, lines, result);
+  oldSpreadsheetRowNumber(line, lines, result);
   facilitate(line, lines, result);
   ["Description", "Agenda", "Participants", "Outcome"].forEach(function(item) {
     blockMatch(item, line, lines, result);
   });
 }
 
-function oldSpreasheetRowNumber(line, lines, result) {
+function oldSpreadsheetRowNumber(line, lines, result) {
   if (line.indexOf("**[ Google Spreadsheet Row Number ]**") !== -1) {
-    result.oldSpreasheetRowNumber = parseInt(line.match(/\*\* (.+)$/)[1]);
+    result.oldSpreadsheetRowNumber = line.match(/\*\* (.+)$/) ? parseInt(line.match(/\*\* (.+)$/)[1]) : undefined;
     return true;
   }
   return false;
@@ -38,7 +46,7 @@ function oldSpreasheetRowNumber(line, lines, result) {
 
 function facilitate(line, lines, result) {
   if (line.indexOf("**[ Facilitator ]**") !== -1) {
-    result.facilitator = line.match(/\*\* (.+)$/)[1].trim();
+    result.facilitator = line.match(/\*\* (.+)$/) ? line.match(/\*\* (.+)$/)[1].trim() : undefined;
     return true;
   }
   return false;

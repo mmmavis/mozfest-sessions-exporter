@@ -13,8 +13,8 @@ var COLUMN_NAMES = [
   "pathways",
   "description",
   "facilitator",
-  "oldSpreasheetRowNumber"
-]
+  "proposalSpreadsheetRowNumber"
+];
 
 module.exports = function(jsonBlob, cb) { 
   var json2csvOptions = {
