@@ -6,6 +6,7 @@ var githubRequest = require("./github-request");
 var githubTicketParser = require("./github-ticket-parser");
 var exportAsJsonFile = require("./export-as-json-file");
 var exportAsCsvFile = require("./export-as-csv-file");
+var postToGoogleSpreadsheet = require("./post-to-google-spreadsheet");
 
 var Habitat = require("habitat");
 Habitat.load(".env");
@@ -80,6 +81,7 @@ function go() {
         console.log("Error exporting csv file: ", err);
       }
     });
+    postToGoogleSpreadsheet(sortedSessions, env.get("GOOGLE_SPREADSHEET_ID_REAL"));
   }
 }
 
