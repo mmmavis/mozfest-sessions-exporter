@@ -2,6 +2,8 @@ var express = require("express");
 var app = express();
 var chalk = require("chalk");
 var GoogleSpreadsheet = require("google-spreadsheet");
+var prompt = require('prompt');
+
 var githubRequest = require("./github-request");
 var githubTicketParser = require("./github-ticket-parser");
 var exportAsJsonFile = require("./export-as-json-file");
@@ -15,9 +17,12 @@ var env = new Habitat("", {
 });
 app.set("port", env.get("port"));
 
+var PATH_TO_GOOGLE_API_CRED_JSON = env.get("PATH_TO_GOOGLE_API_CRED_JSON");
+var GOOGLE_API_CRED = require(PATH_TO_GOOGLE_API_CRED_JSON);
+
 var GITHUB_USER_CRED = {
   username: env.get("GITHUB_USERNAME"),
-  password: env.get("GITHUB_PASSWORD")
+  token: env.get("GITHUB_TOKEN")
 };
 var GITHUB_API_ISSUES_ENDPOINT = "https://api.github.com/repos/" + env.get("GITHUB_REPO") + "/issues" + "?per_page=100";
 
@@ -40,14 +45,15 @@ function traverseWithPagination(pageNum,cb) {
       if (response.statusCode != 200 && response.statusCode != 201) {
         console.log("Response status HTTP " + response.statusCode + ", Github error message: " + response.body.message);
       } else {
-        console.log("\n\n Success \n\n");
-        console.log("///// number of issues found: ", body.length, "\n\n\n");
+        console.log("\nSuccess \n");
+        console.log("///// Number of issues found: ", body.length, "\n");
         body.forEach(function(ticket) {
           githubTicketParser(ticket, function(parsedSession) {
             allParsedSessions.push(parsedSession);
           })
         });
-        if ( response.headers.link.indexOf('rel="last"') === -1 ) {
+
+        if ( !response.headers.link || response.headers.link.indexOf('rel="last"') === -1 ) {
           morePagesAhead = false;
         }
       }
@@ -65,7 +71,7 @@ function sortSession(a, b) {
 
 function go() {
   if (morePagesAhead) {
-    console.log(chalk.green("\n\n\n currentPageNum = ", currentPageNum ,"\n"));
+    console.log(chalk.green("\ncurrentPageNum = ", currentPageNum ,"\n"));
     traverseWithPagination(currentPageNum, function() { 
       go();
     });
@@ -81,11 +87,9 @@ function go() {
         console.log("Error exporting csv file: ", err);
       }
     });
-    postToGoogleSpreadsheet(sortedSessions, env.get("GOOGLE_SPREADSHEET_ID_REAL"));
+    postToGoogleSpreadsheet(GOOGLE_API_CRED, sortedSessions, env.get("GOOGLE_SPREADSHEET_ID_REAL"));
   }
 }
-
-go();
 
 app.get("/", function(req, res) {
   res.send("Hello World :D <br/><br/> You have reached the 'MozFest Sessions Exporter'");
@@ -93,4 +97,19 @@ app.get("/", function(req, res) {
 
 app.listen(app.get("port"), function() {
   console.log(chalk.cyan("Server listening on port %d...\n"), app.get("port"));
+
+  prompt.start();
+
+  var question = "Start importing (Y/N) ?";
+  prompt.get([question], function (err, result) {
+    var userAnswer = result[question];
+    var startRightAway = (userAnswer === 'Y' || userAnswer === 'y') ? true : false;
+    if (startRightAway) {
+      console.log( chalk.black.bgYellow.bold("Start importing session info from Github. Please wait...") );
+      go();
+    } else {
+      console.log( chalk.black.bgYellow.bold("You chose to not start the importing process. No further action will be taken.") );
+    }
+  });
 });
+

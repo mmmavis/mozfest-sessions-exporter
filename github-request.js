@@ -9,7 +9,7 @@ module.exports = function(options, userCreds, cb) {
     },
     auth: {
       user: userCreds.username,
-      pass: userCreds.password
+      pass: userCreds.token
     },
     json: true
   }, options), cb);
