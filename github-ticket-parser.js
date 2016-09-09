@@ -2,7 +2,7 @@ var tokenizer = require("./tokenizer");
 var chalk = require("chalk");
 
 module.exports = function (githubTicket, cb) {
-  console.log(chalk.yellow(("\n\n === Github Ticket # "+ githubTicket.number)));
+  console.log(chalk.blue(("=== Github Ticket # "+ githubTicket.number)));
   var ticketBody = githubTicket.body;
   var tokenizedMeta = tokenizer(ticketBody);
   var parsedRowData = {

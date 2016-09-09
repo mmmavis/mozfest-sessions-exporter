@@ -33,7 +33,7 @@ module.exports = function(jsonBlob, cb) {
         cb(err);
       }
       else {
-        var filePath = CSV_DIR_PATH + "/" + moment(Date.now()).format("YYYYMMD-hh.mm.ssA") + ".csv";
+        var filePath = CSV_DIR_PATH + "/" + moment(Date.now()).format("YYYYMMDD-hh.mm.ssA") + ".csv";
         console.log(filePath);
         fs.writeFile(filePath, parsedCsv, function(err) {
           if(err) {
