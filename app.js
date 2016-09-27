@@ -24,11 +24,28 @@ var GITHUB_USER_CRED = {
   username: env.get("GITHUB_USERNAME"),
   token: env.get("GITHUB_TOKEN")
 };
-var GITHUB_API_ISSUES_ENDPOINT = "https://api.github.com/repos/" + env.get("GITHUB_REPO") + "/issues" + "?per_page=100";
+
+// see available params: https://developer.github.com/v3/issues/#list-issues
+var GITHUB_API_ISSUES_ENDPOINT_BASE = "https://api.github.com/repos/" + env.get("GITHUB_REPO") + "/issues";
+var GITHUB_API_ISSUES_ENDPOINT = getGithubEndpoint();
 
 var currentPageNum = 1;
 var morePagesAhead = true;
 var allParsedSessions = [];
+
+function getGithubEndpoint() {
+  var endpoint = GITHUB_API_ISSUES_ENDPOINT_BASE;
+  // max is 100 tickets per API call
+  endpoint = endpoint + "?per_page=100";
+  // only grab open tickets
+  endpoint = endpoint + "&state=open";
+
+  var specficMilestoneId = env.get("GITHUB_ACCEPTED_SESSIONS_MILESTONE_ID"); 
+  if (specficMilestoneId) {
+    endpoint = endpoint + "&milestone=" + specficMilestoneId;
+  }
+  return endpoint;
+}
 
 function traverseWithPagination(pageNum,cb) {
   githubRequest(
